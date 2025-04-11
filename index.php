@@ -10,6 +10,7 @@
     <li><a href="./tema-4/index.php">Tema 4</a></li>
     <li><a href="./tema-5/index.php">Tema 5</a></li>
     <li><a href="./tema-6/index.php">Tema 6</a></li>
+    <li><a href="./tema-9/index.php">Tema 9</a></li>
   </ul>
 </body>
 </html>
