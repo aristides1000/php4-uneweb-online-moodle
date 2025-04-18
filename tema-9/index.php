@@ -1,65 +1,135 @@
+
 <?php
-class oRG_BDConector //CREAMOS LA CLASE
+class Database
 {
-  var $servidor; //ATRIBUTOS
-  var $usuario;
-  var $password;
-  var $bd;
-  var $consulta;
-  var $enlace;
-  var $resultado;
-  var $error;
+  private $host = "localhost";
+  private $db_name = "d_php4";
+  private $username = "root";
+  private $password = "";
+  public $conn;
 
-  function oRG_BDConector($ser, $usu, $pass, $base) //CONSTRUCTOR
+  public function connect()
   {
-    $this->servidor = $ser;
-    $this->usuario = $usu;
-    $this->password = $pass;
-    $this->bd = $base;
-  }
-  function oConectar() //METODO CONECTAR CON LA BASE DE DATOS
-  {
-    $this->enlace = mysqli_connect($this->servidor, $this->usuario, $this->password);
-    mysqli_select_db($this->enlace, $this->bd);
-    return $this->enlace;
-  }
-  function oEjecutar($query) //METODO PARA EJECUTAR UNA SENTENCIA
-  {
-    $this->consulta = mysqli_query($this->enlace, $query) or die('Error: ' . mysql_error());
-    return $this->consulta;
-  }
-  function oUltimo() //UN METODO OPCIONAL
-  {
-    return mysqli_insert_id($this->enlace); //mysqli_insert_id devuelve directamente el                   identificador de la última inserción
-  }
-  function oNumreg() //METODO QUE CALCULA EL NUMERO DE FILAS EN LA TABLA
-  {
-    $this->total = mysqli_num_rows($this->consulta);
-    return $this->total;
-  }
-  function oDatosarray($consulta = NULL) //METODO QUE EXTRAE EN UN ARREGLO
-  {
-    if ($consulta) $this->consulta = $consulta;
-    $this->resultado = mysqli_fetch_array($this->consulta);
-    return $this->resultado;
-  }
-  public function oLimpiaconsulta() //OTROS METODOS QUE NOS PUEDEN SERVIR A FUTURO
-  {
-    mysqli_free_result($this->consulta); //mysql_free_result Libera la memoria del Resultado
-  }
-  public function oCerrarconexion()
-  {
-    mysqli_close($this->enlace); //cerrar la conexión con la bd
+    $this->conn = null;
+
+    try {
+      $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
+      $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } catch (PDOException $exception) {
+      echo "Connection error: " . $exception->getMessage();
+    }
+
+    return $this->conn;
   }
 }
-//INSTANCIAMOS LA CLASE, PRIMERO CREAMOS EL OBJETO
-$con = new oRG_BDConector('localhost', 'root', '', 'php4');
-$con->oConectar(); //INVOCAMOS EL METODO A USAR
-$sql = $con->oEjecutar("SELECT * FROM cliente");
-//echo $con->oNumreg();
 
-while ($row = mysqli_fetch_array($sql)) {
-  echo $row[0] . " " . $row[1] . "<br>";  //se imprime todas las filas extraidas de la de base de datos
+class User
+{
+  private $conn;
+  private $table = "users";
+
+  public $id;
+  public $name;
+  public $email;
+
+  public function __construct($db)
+  {
+    $this->conn = $db;
+  }
+
+  // Aquí recreamos el CRUD basado en Programación Orientada a Objetos
+
+  // Create
+  public function create()
+  {
+    $query = "INSERT INTO " . $this->table . " (name, email) VALUES (:name, :email)";
+    $stmt = $this->conn->prepare($query);
+
+    $stmt->bindParam(":name", $this->name);
+    $stmt->bindParam(":email", $this->email);
+
+    if ($stmt->execute()) {
+      return true;
+    }
+    return false;
+  }
+
+  // Read
+  public function read()
+  {
+    $query = "SELECT * FROM " . $this->table;
+    $stmt = $this->conn->prepare($query);
+    $stmt->execute();
+
+    return $stmt;
+  }
+
+  // Update
+  public function update()
+  {
+    $query = "UPDATE " . $this->table . " SET name = :name, email = :email WHERE id = :id";
+    $stmt = $this->conn->prepare($query);
+
+    $stmt->bindParam(":name", $this->name);
+    $stmt->bindParam(":email", $this->email);
+    $stmt->bindParam(":id", $this->id);
+
+    if ($stmt->execute()) {
+      return true;
+    }
+    return false;
+  }
+
+  // Delete
+  public function delete()
+  {
+    $query = "DELETE FROM " . $this->table . " WHERE id = :id";
+    $stmt = $this->conn->prepare($query);
+
+    $stmt->bindParam(":id", $this->id);
+
+    if ($stmt->execute()) {
+      return true;
+    }
+    return false;
+  }
 }
-$con->oLimpiaconsulta();
-$con->oCerrarconexion();
+
+// Ejemplo de uso
+$database = new Database();
+$db = $database->connect();
+
+$user = new User($db);
+
+// Crear un nuevo usuario
+$user->name = "John Doe";
+$user->email = "john.doe@example.com";
+if ($user->create()) {
+  echo "<h1>Creación de usuario</h1>";
+  echo "<p>Usuario creado satisfactoriamente!</p>";
+}
+
+// Leer todos los usuarios
+$stmt = $user->read();
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+  extract($row);
+  echo "<h1>Lectura de todos los usuarios</h1>";
+  echo "<p>ID: $id, Nombre: $name, Email: $email</p>";
+}
+
+// Actualizar un usario
+$user->id = 1; // Suponiendo que el usuario con ID 1 existe
+$user->name = "Jane Doe";
+$user->email = "jane.doe@example.com";
+if ($user->update()) {
+  echo "<h1>Actualización de usuario</h1>";
+  echo "<p>Usuario actualizado satisfactoriamente!</p>";
+}
+
+// Eliminar un usuario
+$user->id = 1; // Suponiendo que el usuario con ID 1 existe
+if ($user->delete()) {
+  echo "<h1>Eliminación de usuario</h1>";
+  echo "<p>Usuario eliminado satisfactoriamente!</p>";
+}
+?>
