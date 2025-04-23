@@ -10,6 +10,14 @@
   */
   set_time_limit(1800);
 
+  /*
+    Configura las rutas donde PHP busca los archivos a incluir.
+
+    Agrega el directorio ./src/ al principio de la lista de rutas de inclusión
+    PATH_SEPARATOR es una constante que usa ; en Windows o : en Unix/Linux
+    get_include_path() obtiene la configuración actual de rutas
+    Esto hace que PHP busque archivos primero en ./src/ y luego en las rutas normales
+  */
   set_include_path('./src/'.PATH_SEPARATOR.get_include_path());
 
   // Incluir la librería PDF-PHP
